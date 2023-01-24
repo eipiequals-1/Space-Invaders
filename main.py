@@ -1,19 +1,24 @@
+"""
+Olivier Vannier CSP #131
+Modified code from Coding With Russ space invaders tutorial. Added shields with health for player.
+"""
+
 import pygame
 from pygame import mixer
 from pygame.locals import *
 import random
 
-
+# initialize pygame mixer
 pygame.mixer.pre_init(44100, -16, 2, 512)
 mixer.init()
 pygame.init()
 
 
-#define fps
+# define fps
 clock = pygame.time.Clock()
 fps = 60
 
-
+# create screen
 screen_width = 600
 screen_height = 800
 
@@ -21,12 +26,12 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Space Invaders')
 
 
-#define fonts
+# define fonts
 font30 = pygame.font.SysFont('Constantia', 30)
 font40 = pygame.font.SysFont('Constantia', 40)
 
 
-#load sounds
+# load sounds
 explosion_fx = pygame.mixer.Sound("img/explosion.wav")
 explosion_fx.set_volume(0.25)
 
@@ -68,10 +73,12 @@ def draw_text(text, font, text_col, x, y):
 # create spaceship class
 class Spaceship(pygame.sprite.Sprite):
     def __init__(self, x, y, health):
+        # set sprite image, rect
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load("img/spaceship.png")
         self.rect = self.image.get_rect()
         self.rect.center = [x, y]
+        # set heatlh status
         self.health_start = health
         self.health_remaining = health
         self.last_shot = pygame.time.get_ticks()
@@ -110,6 +117,7 @@ class Spaceship(pygame.sprite.Sprite):
         pygame.draw.rect(screen, red, (self.rect.x, (self.rect.bottom + 10), self.rect.width, 15))
         if self.health_remaining > 0:
             pygame.draw.rect(screen, green, (self.rect.x, (self.rect.bottom + 10), int(self.rect.width * (self.health_remaining / self.health_start)), 15))
+        # kill the sprite if dead and add explosion
         elif self.health_remaining <= 0:
             explosion = Explosion(self.rect.centerx, self.rect.centery, 3)
             explosion_group.add(explosion)
@@ -122,15 +130,20 @@ class Spaceship(pygame.sprite.Sprite):
 # create Bullets class
 class Bullets(pygame.sprite.Sprite):
     def __init__(self, x, y):
+        # init sprite image and rect
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load("img/bullet.png")
         self.rect = self.image.get_rect()
         self.rect.center = [x, y]
 
     def update(self):
+        # move sprite
         self.rect.y -= 5
+        # check if passed screen
         if self.rect.bottom < 0:
             self.kill()
+        
+        # check if collided with aliens, then kill
         if pygame.sprite.spritecollide(self, alien_group, True):
             self.kill()
             explosion_fx.play()
@@ -141,6 +154,7 @@ class Bullets(pygame.sprite.Sprite):
 
 class Shield(pygame.sprite.Sprite):
     def __init__(self, x, y):
+        # init sprite image and rect
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface((50, 50))
         pygame.draw.rect(self.image, (0, 255, 0), (0, 0, self.image.get_width(), self.image.get_height()))
@@ -149,6 +163,7 @@ class Shield(pygame.sprite.Sprite):
         self.health = 4
 
     def update(self):
+        # if it collides with alien bullets, lose a life
         if pygame.sprite.spritecollide(self, alien_bullet_group, True):
             self.health -= 1
             explosion_fx.play()
@@ -157,13 +172,14 @@ class Shield(pygame.sprite.Sprite):
             # change the shield color to signify that it has been hit
             pygame.draw.rect(self.image, (0, 0, 0), (0, 0, self.image.get_width(), self.image.get_height()))
             pygame.draw.rect(self.image, (0, 255, 60 * (4 - self.health)), (0, 0, self.image.get_width(), self.image.get_height()))
-
+        # if the health is 0, then kill the sprite
         if self.health <= 0:
             self.kill()
 
 # create Aliens class
 class Aliens(pygame.sprite.Sprite):
     def __init__(self, x, y):
+        # init sprite image and rect
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load("img/alien" + str(random.randint(1, 5)) + ".png")
         self.rect = self.image.get_rect()
@@ -172,6 +188,7 @@ class Aliens(pygame.sprite.Sprite):
         self.move_direction = 1
 
     def update(self):
+        # move rect and change direction if it passes thescreen
         self.rect.x += self.move_direction
         self.move_counter += 1
         if abs(self.move_counter) > 75:
@@ -182,6 +199,7 @@ class Aliens(pygame.sprite.Sprite):
 # create Alien Bullets class
 class Alien_Bullets(pygame.sprite.Sprite):
     def __init__(self, x, y):
+        # init sprite image and rect
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load("img/alien_bullet.png")
         self.rect = self.image.get_rect()
@@ -191,6 +209,8 @@ class Alien_Bullets(pygame.sprite.Sprite):
         self.rect.y += 2
         if self.rect.top > screen_height:
             self.kill()
+        
+        # if sprites collide with the spaceship_group
         if pygame.sprite.spritecollide(self, spaceship_group, False, pygame.sprite.collide_mask):
             self.kill()
             explosion2_fx.play()
@@ -203,8 +223,10 @@ class Alien_Bullets(pygame.sprite.Sprite):
 # create Explosion class
 class Explosion(pygame.sprite.Sprite):
     def __init__(self, x, y, size):
+        # init sprite image and rect
         pygame.sprite.Sprite.__init__(self)
         self.images = []
+        # create and load all images
         for num in range(1, 6):
             img = pygame.image.load(f"img/exp{num}.png")
             if size == 1:
@@ -215,6 +237,8 @@ class Explosion(pygame.sprite.Sprite):
                 img = pygame.transform.scale(img, (160, 160))
             # add the image to the list
             self.images.append(img)
+        
+        # keep track of initial index and image
         self.index = 0
         self.image = self.images[self.index]
         self.rect = self.image.get_rect()
@@ -227,6 +251,7 @@ class Explosion(pygame.sprite.Sprite):
         # update explosion animation
         self.counter += 1
 
+        # check if index is not out of bounds and time to update explosion image
         if self.counter >= explosion_speed and self.index < len(self.images) - 1:
             self.counter = 0
             self.index += 1
@@ -246,6 +271,7 @@ explosion_group = pygame.sprite.Group()
 shield_group = pygame.sprite.Group()
 
 def create_shields():
+    # create 8 shields across the screen
     for i in range(8):
         shield = Shield(i * 100, screen_height - 200)
         shield_group.add(shield)
@@ -271,7 +297,7 @@ while run:
     # draw background
     draw_bg()
 
-
+    # start the game
     if countdown == 0:
         # create random alien bullets
         # record current time
@@ -301,6 +327,7 @@ while run:
             if game_over == 1:
                 draw_text('YOU WIN!', font40, white, int(screen_width / 2 - 100), int(screen_height / 2 + 50))
 
+    # draw countdown text
     if countdown > 0:
         draw_text('GET READY!', font40, white, int(screen_width / 2 - 110), int(screen_height / 2 + 50))
         draw_text(str(countdown), font40, white, int(screen_width / 2 - 10), int(screen_height / 2 + 100))
@@ -330,4 +357,5 @@ while run:
 
     pygame.display.update()
 
+# quit pygame
 pygame.quit()
