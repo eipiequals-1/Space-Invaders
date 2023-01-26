@@ -1,5 +1,6 @@
 """
 Olivier Vannier CSP #131
+01/27/23
 Modified code from Coding With Russ space invaders tutorial. Added shields with health for player.
 """
 
@@ -22,6 +23,7 @@ fps = 60
 screen_width = 600
 screen_height = 800
 
+# create screen and add window caption
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Space Invaders')
 
@@ -117,6 +119,7 @@ class Spaceship(pygame.sprite.Sprite):
         pygame.draw.rect(screen, red, (self.rect.x, (self.rect.bottom + 10), self.rect.width, 15))
         if self.health_remaining > 0:
             pygame.draw.rect(screen, green, (self.rect.x, (self.rect.bottom + 10), int(self.rect.width * (self.health_remaining / self.health_start)), 15))
+        
         # kill the sprite if dead and add explosion
         elif self.health_remaining <= 0:
             explosion = Explosion(self.rect.centerx, self.rect.centery, 3)
@@ -124,7 +127,6 @@ class Spaceship(pygame.sprite.Sprite):
             self.kill()
             game_over = -1
         return game_over
-
 
 
 # create Bullets class
@@ -151,7 +153,6 @@ class Bullets(pygame.sprite.Sprite):
             explosion_group.add(explosion)
 
 
-
 class Shield(pygame.sprite.Sprite):
     def __init__(self, x, y):
         # init sprite image and rect
@@ -171,10 +172,11 @@ class Shield(pygame.sprite.Sprite):
             explosion_group.add(explosion)
             # change the shield color to signify that it has been hit
             pygame.draw.rect(self.image, (0, 0, 0), (0, 0, self.image.get_width(), self.image.get_height()))
-            pygame.draw.rect(self.image, (0, 255, 60 * (4 - self.health)), (0, 0, self.image.get_width(), self.image.get_height()))
+            pygame.draw.rect(self.image, (55 * (4 - self.health), 255, 0), (0, 0, self.image.get_width(), self.image.get_height()))
         # if the health is 0, then kill the sprite
         if self.health <= 0:
             self.kill()
+
 
 # create Aliens class
 class Aliens(pygame.sprite.Sprite):
@@ -244,7 +246,6 @@ class Explosion(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = [x, y]
         self.counter = 0
-
 
     def update(self):
         explosion_speed = 3
